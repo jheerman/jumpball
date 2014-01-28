@@ -5,6 +5,8 @@ using MonoTouch.UIKit;
 using System.Collections.Generic;
 using MonoTouch.ObjCRuntime;
 
+using ShinobiEssentials;
+
 namespace jumpball
 {
 	public partial class jumpballViewController : UIViewController
@@ -17,7 +19,9 @@ namespace jumpball
 
 		Arrow _position = Arrow.Right;
 		UIImageView _arrow = new UIImageView (UIImage.FromFile ("1.png"));
-		UIImage[] right_to_left_arrows = new UIImage [] {
+		UIButton _alternate = new UIButton();
+
+		static readonly UIImage[] right_to_left_arrows = new UIImage [] {
 			UIImage.FromFile("1.png"),
 			UIImage.FromFile("2.png"),
 			UIImage.FromFile("3.png"),
@@ -25,7 +29,7 @@ namespace jumpball
 			UIImage.FromFile("5.png")
 		};
 
-		UIImage[] left_to_right_arrows = new UIImage [] {
+		static readonly UIImage[] left_to_right_arrows = new UIImage [] {
 			UIImage.FromFile("5.png"),
 			UIImage.FromFile("6.png"),
 			UIImage.FromFile("7.png"),
@@ -55,17 +59,23 @@ namespace jumpball
 		public override void ViewDidLoad ()
 		{
 			base.ViewDidLoad ();
-
-			View.BackgroundColor = UIColor.White;
+			SEssentialsSlidingOverlay slidingView = new SEssentialsSlidingOverlay (View.Frame, true);
+			slidingView.Overlay.BackgroundColor = UIColor.White;
+			slidingView.UnderlayRevealAmount = UserInterfaceIdiomIsPhone ? .66f : .33f;
+			slidingView.Underlay.AddShadowTop ();
+			slidingView.Overlay.AddSubview (_arrow);
 
 			_arrow.Center = View.Center;
-			View.AddSubview (_arrow);
+			_arrow.AutosizesSubviews = true;
+			_arrow.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
 
-			var alternate = new UIButton (new RectangleF (0, View.Frame.Bottom - 25, View.Frame.Width, 55));
-			alternate.SetTitleColor (UIColor.Blue, UIControlState.Normal);
-			alternate.HorizontalAlignment = UIControlContentHorizontalAlignment.Center;
-			alternate.SetTitle ("Alternate", UIControlState.Normal);
-			alternate.TouchUpInside += (object sender, EventArgs e) => {
+			_alternate = new UIButton (new RectangleF (0, View.Frame.Bottom - 100, View.Frame.Width, 55));
+			_alternate.AutosizesSubviews = true;
+			_alternate.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
+			_alternate.SetTitleColor (UIColor.Blue, UIControlState.Normal);
+			_alternate.HorizontalAlignment = UIControlContentHorizontalAlignment.Center;
+			_alternate.SetTitle ("Alternate", UIControlState.Normal);
+			_alternate.TouchUpInside += (object sender, EventArgs e) => {
 				possessionHistory.Add(_position);
 				if (_position == Arrow.Left)
 				{
@@ -74,10 +84,10 @@ namespace jumpball
 					_arrow.AnimationRepeatCount = 1;
 					_arrow.AnimationDuration = .5;
 
-					UIView.BeginAnimations("slideAnimation");
+					UIView.BeginAnimations("rotateAnimation");
 					UIView.SetAnimationDelegate (this);
 					UIView.SetAnimationDidStopSelector (
-						new Selector ("slideAnimationFinished:"));
+						new Selector ("rotateAnimationFinished:"));
 					UIView.CommitAnimations();
 
 					_arrow.StartAnimating();
@@ -89,10 +99,10 @@ namespace jumpball
 					_arrow.AnimationRepeatCount = 1;
 					_arrow.AnimationDuration = .5;
 
-					UIView.BeginAnimations("slideAnimation");
+					UIView.BeginAnimations("rotateAnimation");
 					UIView.SetAnimationDelegate (this);
 					UIView.SetAnimationDidStopSelector (
-						new Selector ("slideAnimationFinished:"));
+						new Selector ("rotateAnimationFinished:"));
 					UIView.CommitAnimations();
 
 					_arrow.StartAnimating();
@@ -100,10 +110,12 @@ namespace jumpball
 				}
 			};
 
-			View.AddSubview (alternate);
+			slidingView.Overlay.AddSubview (_alternate);
+			slidingView.Style.ButtonTintColor = UIColor.Black;
+			View.AddSubview (slidingView);
 		}
 
-		[Export("slideAnimationFinished:")]
+		[Export("rotateAnimationFinished:")]
 		void RotateStopped ()
 		{
 			if (_position == Arrow.Right)
