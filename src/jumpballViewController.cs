@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Drawing;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
@@ -6,6 +7,7 @@ using System.Collections.Generic;
 using MonoTouch.ObjCRuntime;
 
 using ShinobiEssentials;
+using MonoTouch.Dialog;
 
 namespace jumpball
 {
@@ -17,9 +19,10 @@ namespace jumpball
 			Right = 2
 		};
 
+		UIScrollView _scroller;
+		SEssentialsSlidingOverlay _slidingView;
 		Arrow _position = Arrow.Right;
 		UIImageView _arrow = new UIImageView (UIImage.FromFile ("1.png"));
-		UIButton _alternate = new UIButton();
 
 		static readonly UIImage[] right_to_left_arrows = new UIImage [] {
 			UIImage.FromFile("1.png"),
@@ -37,7 +40,7 @@ namespace jumpball
 			UIImage.FromFile("1.png")
 		};
 
-		List<Arrow> possessionHistory = new List<Arrow> ();
+		List<Arrow> _possessionHistory = new List<Arrow> ();
 
 		static bool UserInterfaceIdiomIsPhone {
 			get { return UIDevice.CurrentDevice.UserInterfaceIdiom == UIUserInterfaceIdiom.Phone; }
@@ -58,7 +61,14 @@ namespace jumpball
 
 		void alternatePossession (object sender, EventArgs args)
 		{
-			possessionHistory.Add (_position);
+			_scroller.AddSubview (
+				new UILabel() {
+					Frame = new RectangleF(20, (_possessionHistory.Count * 50), 200, 50),
+					Text = Enum.GetName (typeof(Arrow), _position)
+				}
+			);
+			_possessionHistory.Add (_position);
+
 			if (_position == Arrow.Left) {
 				//set the animation left to right
 				_arrow.AnimationImages = left_to_right_arrows;
@@ -87,12 +97,12 @@ namespace jumpball
 		{
 			base.ViewDidLoad ();
 
-			SEssentialsSlidingOverlay slidingView = new SEssentialsSlidingOverlay (View.Frame, true);
-			slidingView.Overlay.BackgroundColor = UIColor.White;
-			slidingView.UnderlayRevealAmount = UserInterfaceIdiomIsPhone ? .66f : .33f;
-			slidingView.Underlay.AddShadowTop ();
-			slidingView.Toolbar.BackgroundColor = UIColor.Red;
-			slidingView.Overlay.AddSubview (_arrow);
+			_slidingView = new SEssentialsSlidingOverlay (View.Frame, true);
+			_slidingView.Overlay.BackgroundColor = UIColor.White;
+			_slidingView.UnderlayRevealAmount = UserInterfaceIdiomIsPhone ? .66f : .33f;
+			_slidingView.Underlay.AddShadowTop ();
+			_slidingView.Toolbar.BackgroundColor = UIColor.Red;
+			_slidingView.Overlay.AddSubview (_arrow);
 
 			var title = new UILabel () { 
 				Text = "Jumpball",
@@ -102,24 +112,43 @@ namespace jumpball
 				TextColor = UIColor.Red
 			};
 
-			slidingView.Overlay.AddSubview (title);
+			_slidingView.Overlay.AddSubview (title);
 
 			_arrow.Center = View.Center;
 			_arrow.AutosizesSubviews = true;
 			_arrow.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
 
+			var alternate = new UIButton (new RectangleF (0, View.Frame.Bottom - 100, View.Frame.Width, 55));
+			alternate.AutosizesSubviews = true;
+			alternate.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
+			alternate.SetTitleColor (UIColor.Blue, UIControlState.Normal);
+			alternate.HorizontalAlignment = UIControlContentHorizontalAlignment.Center;
+			alternate.SetTitle ("Alternate", UIControlState.Normal);
+			alternate.TouchUpInside += alternatePossession;
 
-			_alternate = new UIButton (new RectangleF (0, View.Frame.Bottom - 100, View.Frame.Width, 55));
-			_alternate.AutosizesSubviews = true;
-			_alternate.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
-			_alternate.SetTitleColor (UIColor.Blue, UIControlState.Normal);
-			_alternate.HorizontalAlignment = UIControlContentHorizontalAlignment.Center;
-			_alternate.SetTitle ("Alternate", UIControlState.Normal);
-			_alternate.TouchUpInside += alternatePossession;
+			_slidingView.Overlay.AddSubview (alternate);
+			_slidingView.Style.ButtonTintColor = UIColor.White;
 
-			slidingView.Overlay.AddSubview (_alternate);
-			slidingView.Style.ButtonTintColor = UIColor.White;
-			View.AddSubview (slidingView);
+			_scroller = new UIScrollView () {
+				Frame = new RectangleF (0, 50, _slidingView.Underlay.Frame.Width, _slidingView.Underlay.Frame.Height+50)
+			};
+
+			_scroller.ScrollEnabled = true;
+			_scroller.UserInteractionEnabled = true;
+			_scroller.BackgroundColor = UIColor.Clear;
+			_scroller.ContentSize = new SizeF (_slidingView.Underlay.Frame.Width,2000);
+
+			_slidingView.Underlay.AddSubview (
+				new UILabel () { 
+					Frame = new RectangleF(0,0,_slidingView.Underlay.Frame.Width, 50),
+					Text = "Possession History",
+					Font = UIFont.BoldSystemFontOfSize(20),
+					TextAlignment = UITextAlignment.Center
+				}
+			);
+
+			_slidingView.Underlay.AddSubview (_scroller);
+			View.AddSubview (_slidingView);
 		}
 
 		public override bool PrefersStatusBarHidden ()
