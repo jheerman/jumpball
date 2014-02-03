@@ -13,7 +13,7 @@ namespace jumpball
 {
 	public partial class jumpballViewController : UIViewController
 	{
-		public enum Arrow
+		public enum ArrowPosition
 		{
 			Left = 1,
 			Right = 2
@@ -21,8 +21,8 @@ namespace jumpball
 
 		UIScrollView _scroller;
 		SEssentialsSlidingOverlay _slidingView;
-		Arrow _position = Arrow.Right;
-		UIImageView _arrow = new UIImageView (UIImage.FromFile ("1.png"));
+		ArrowPosition _position = ArrowPosition.Right;
+		UIImageView _arrowImage = new UIImageView (UIImage.FromFile ("1.png"));
 
 		static readonly UIImage[] right_to_left_arrows = new UIImage [] {
 			UIImage.FromFile("1.png"),
@@ -40,7 +40,7 @@ namespace jumpball
 			UIImage.FromFile("1.png")
 		};
 
-		List<Arrow> _possessionHistory = new List<Arrow> ();
+		List<ArrowPosition> _possessionHistory = new List<ArrowPosition> ();
 
 		static bool UserInterfaceIdiomIsPhone {
 			get { return UIDevice.CurrentDevice.UserInterfaceIdiom == UIUserInterfaceIdiom.Phone; }
@@ -72,23 +72,26 @@ namespace jumpball
 			_scroller.AddSubview (
 				new UILabel() {
 					Frame = new RectangleF(10, (_possessionHistory.Count * 50), 200, 50),
+					TextAlignment = UITextAlignment.Left,
+					AutosizesSubviews = true,
+					AutoresizingMask = UIViewAutoresizing.FlexibleWidth,
 					Font = UIFont.SystemFontOfSize(13),
 					Text = String.Format("{0} - {1}", 
-						Enum.GetName (typeof(Arrow), _position),
+						Enum.GetName (typeof(ArrowPosition), _position),
 						DateTime.Now.ToString("G"))
 				}
 			);
 			_possessionHistory.Add (_position);
 			_scroller.ContentSize = new SizeF (_slidingView.Underlay.Frame.Width, (50 * _possessionHistory.Count));
 
-			_arrow.AnimationImages = _position == Arrow.Left ? left_to_right_arrows : right_to_left_arrows;
-			_arrow.AnimationRepeatCount = 1;
-			_arrow.AnimationDuration = .5;
+			_arrowImage.AnimationImages = _position == ArrowPosition.Left ? left_to_right_arrows : right_to_left_arrows;
+			_arrowImage.AnimationRepeatCount = 1;
+			_arrowImage.AnimationDuration = .5;
 			UIView.BeginAnimations ("rotateAnimation");
 			UIView.SetAnimationDelegate (this);
 			UIView.SetAnimationDidStopSelector (new Selector ("rotateAnimationFinished:"));
 			UIView.CommitAnimations ();
-			_arrow.StartAnimating ();
+			_arrowImage.StartAnimating ();
 
 		}
 
@@ -98,10 +101,11 @@ namespace jumpball
 
 			_slidingView = new SEssentialsSlidingOverlay (View.Frame, true);
 			_slidingView.Overlay.BackgroundColor = UIColor.White;
+			_slidingView.Overlay.AddSubview (_arrowImage);
+
 			_slidingView.UnderlayRevealAmount = UserInterfaceIdiomIsPhone ? .66f : .33f;
 			_slidingView.Underlay.AddShadowTop ();
 			_slidingView.Toolbar.BackgroundColor = UIColor.Red;
-			_slidingView.Overlay.AddSubview (_arrow);
 
 			var title = new UILabel () { 
 				Tag = 1001,
@@ -116,22 +120,22 @@ namespace jumpball
 
 			_slidingView.Overlay.AddSubview (title);
 
-			_arrow.Center = View.Center;
-			_arrow.AutosizesSubviews = true;
-			_arrow.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
+			_arrowImage.Center = View.Center;
+			_arrowImage.AutosizesSubviews = true;
+			_arrowImage.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
 
-			var alternate = new UIButton () { 
+			var alternateButton = new UIButton () { 
 				Frame = new RectangleF (0, View.Frame.Bottom - 100, View.Frame.Width, 55),
 				AutosizesSubviews = true,
 				HorizontalAlignment = UIControlContentHorizontalAlignment.Center,
 				AutoresizingMask = UIViewAutoresizing.FlexibleMargins
 			};
 
-			alternate.SetTitleColor (UIColor.Blue, UIControlState.Normal);
-			alternate.SetTitle ("Alternate", UIControlState.Normal);
-			alternate.TouchUpInside += alternatePossession;
+			alternateButton.SetTitleColor (UIColor.Blue, UIControlState.Normal);
+			alternateButton.SetTitle ("Alternate", UIControlState.Normal);
+			alternateButton.TouchUpInside += alternatePossession;
 
-			_slidingView.Overlay.AddSubview (alternate);
+			_slidingView.Overlay.AddSubview (alternateButton);
 			_slidingView.Style.ButtonTintColor = UIColor.White;
 
 			_scroller = new UIScrollView () {
@@ -139,6 +143,8 @@ namespace jumpball
 				ScrollEnabled = true,
 				UserInteractionEnabled = true,
 				BackgroundColor = UIColor.Clear,
+				AutosizesSubviews = true,
+				AutoresizingMask = UIViewAutoresizing.All,
 				ContentSize = new SizeF (_slidingView.Underlay.Frame.Width,_slidingView.Underlay.Frame.Height)
 			};
 
@@ -163,15 +169,15 @@ namespace jumpball
 		[Export("rotateAnimationFinished:")]
 		void RotateStopped ()
 		{
-			if (_position == Arrow.Right)
+			if (_position == ArrowPosition.Right)
 			{
-				_arrow.Image = UIImage.FromFile("5.png");
-				_position = Arrow.Left;
+				_arrowImage.Image = UIImage.FromFile("5.png");
+				_position = ArrowPosition.Left;
 				return;
 			}
 
-			_arrow.Image = UIImage.FromFile("1.png");
-			_position = Arrow.Right;
+			_arrowImage.Image = UIImage.FromFile("1.png");
+			_position = ArrowPosition.Right;
 
 		}
 
