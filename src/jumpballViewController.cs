@@ -57,40 +57,39 @@ namespace jumpball
 			base.DidReceiveMemoryWarning ();
 			
 			// Release any cached data, images, etc that aren't in use.
+			foreach (var subview in _slidingView.Underlay.Subviews) {
+				// ignore header label but remove all other subviews
+				if (subview.Tag == 1001)  
+					continue;
+				subview.RemoveFromSuperview ();
+			}
+			_possessionHistory.Clear ();
+			_scroller.ContentSize = new SizeF (0f, 0f);
 		}
 
 		void alternatePossession (object sender, EventArgs args)
 		{
 			_scroller.AddSubview (
 				new UILabel() {
-					Frame = new RectangleF(20, (_possessionHistory.Count * 50), 200, 50),
-					Text = Enum.GetName (typeof(Arrow), _position)
+					Frame = new RectangleF(10, (_possessionHistory.Count * 50), 200, 50),
+					Font = UIFont.SystemFontOfSize(13),
+					Text = String.Format("{0} - {1}", 
+						Enum.GetName (typeof(Arrow), _position),
+						DateTime.Now.ToString("G"))
 				}
 			);
 			_possessionHistory.Add (_position);
+			_scroller.ContentSize = new SizeF (_slidingView.Underlay.Frame.Width, (50 * _possessionHistory.Count));
 
-			if (_position == Arrow.Left) {
-				//set the animation left to right
-				_arrow.AnimationImages = left_to_right_arrows;
-				_arrow.AnimationRepeatCount = 1;
-				_arrow.AnimationDuration = .5;
-				UIView.BeginAnimations ("rotateAnimation");
-				UIView.SetAnimationDelegate (this);
-				UIView.SetAnimationDidStopSelector (new Selector ("rotateAnimationFinished:"));
-				UIView.CommitAnimations ();
-				_arrow.StartAnimating ();
-			}
-			else {
-				//set the animation right to left
-				_arrow.AnimationImages = right_to_left_arrows;
-				_arrow.AnimationRepeatCount = 1;
-				_arrow.AnimationDuration = .5;
-				UIView.BeginAnimations ("rotateAnimation");
-				UIView.SetAnimationDelegate (this);
-				UIView.SetAnimationDidStopSelector (new Selector ("rotateAnimationFinished:"));
-				UIView.CommitAnimations ();
-				_arrow.StartAnimating ();
-			}
+			_arrow.AnimationImages = _position == Arrow.Left ? left_to_right_arrows : right_to_left_arrows;
+			_arrow.AnimationRepeatCount = 1;
+			_arrow.AnimationDuration = .5;
+			UIView.BeginAnimations ("rotateAnimation");
+			UIView.SetAnimationDelegate (this);
+			UIView.SetAnimationDidStopSelector (new Selector ("rotateAnimationFinished:"));
+			UIView.CommitAnimations ();
+			_arrow.StartAnimating ();
+
 		}
 
 		public override void ViewDidLoad ()
@@ -105,11 +104,14 @@ namespace jumpball
 			_slidingView.Overlay.AddSubview (_arrow);
 
 			var title = new UILabel () { 
+				Tag = 1001,
 				Text = "Jumpball",
 				TextAlignment = UITextAlignment.Center,
 				Frame = new RectangleF(0,0,View.Frame.Width, 50),
 				Font = UIFont.BoldSystemFontOfSize(20),
-				TextColor = UIColor.Red
+				TextColor = UIColor.Red,
+				AutosizesSubviews = true,
+				AutoresizingMask = UIViewAutoresizing.FlexibleLeftMargin | UIViewAutoresizing.FlexibleRightMargin
 			};
 
 			_slidingView.Overlay.AddSubview (title);
@@ -118,11 +120,14 @@ namespace jumpball
 			_arrow.AutosizesSubviews = true;
 			_arrow.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
 
-			var alternate = new UIButton (new RectangleF (0, View.Frame.Bottom - 100, View.Frame.Width, 55));
-			alternate.AutosizesSubviews = true;
-			alternate.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
+			var alternate = new UIButton () { 
+				Frame = new RectangleF (0, View.Frame.Bottom - 100, View.Frame.Width, 55),
+				AutosizesSubviews = true,
+				HorizontalAlignment = UIControlContentHorizontalAlignment.Center,
+				AutoresizingMask = UIViewAutoresizing.FlexibleMargins
+			};
+
 			alternate.SetTitleColor (UIColor.Blue, UIControlState.Normal);
-			alternate.HorizontalAlignment = UIControlContentHorizontalAlignment.Center;
 			alternate.SetTitle ("Alternate", UIControlState.Normal);
 			alternate.TouchUpInside += alternatePossession;
 
@@ -130,13 +135,12 @@ namespace jumpball
 			_slidingView.Style.ButtonTintColor = UIColor.White;
 
 			_scroller = new UIScrollView () {
-				Frame = new RectangleF (0, 50, _slidingView.Underlay.Frame.Width, _slidingView.Underlay.Frame.Height+50)
+				Frame = new RectangleF (0, 50, _slidingView.Underlay.Frame.Width, _slidingView.Underlay.Frame.Height+50),
+				ScrollEnabled = true,
+				UserInteractionEnabled = true,
+				BackgroundColor = UIColor.Clear,
+				ContentSize = new SizeF (_slidingView.Underlay.Frame.Width,_slidingView.Underlay.Frame.Height)
 			};
-
-			_scroller.ScrollEnabled = true;
-			_scroller.UserInteractionEnabled = true;
-			_scroller.BackgroundColor = UIColor.Clear;
-			_scroller.ContentSize = new SizeF (_slidingView.Underlay.Frame.Width,2000);
 
 			_slidingView.Underlay.AddSubview (
 				new UILabel () { 
