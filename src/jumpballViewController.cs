@@ -81,6 +81,7 @@ namespace jumpball
 						DateTime.Now.ToString("G"))
 				}
 			);
+
 			_possessionHistory.Add (_position);
 			_scroller.ContentSize = new SizeF (_slidingView.Underlay.Frame.Width, (50 * _possessionHistory.Count));
 
@@ -139,7 +140,7 @@ namespace jumpball
 			_slidingView.Style.ButtonTintColor = UIColor.White;
 
 			_scroller = new UIScrollView () {
-				Frame = new RectangleF (0, 50, _slidingView.Underlay.Frame.Width, _slidingView.Underlay.Frame.Height+50),
+				Frame = new RectangleF (0, 50, _slidingView.Underlay.Frame.Width, _slidingView.Underlay.Frame.Height - 50),
 				ScrollEnabled = true,
 				UserInteractionEnabled = true,
 				BackgroundColor = UIColor.Clear,
