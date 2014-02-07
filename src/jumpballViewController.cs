@@ -22,7 +22,7 @@ namespace jumpball
 		UIScrollView _scroller;
 		SEssentialsSlidingOverlay _slidingView;
 		ArrowPosition _position = ArrowPosition.Right;
-		UIButton _arrowImage = new UIButton ();
+		UIButton _arrowButton = new UIButton ();
 
 		static readonly UIImage[] right_to_left_arrows = new UIImage [] {
 			UIImage.FromFile("1.png"),
@@ -57,7 +57,7 @@ namespace jumpball
 			base.DidReceiveMemoryWarning ();
 			
 			// Release any cached data, images, etc that aren't in use.
-			foreach (var subview in _slidingView.Underlay.Subviews) {
+			foreach (var subview in _scroller.Subviews) {
 				// ignore header label but remove all other subviews
 				if (subview.Tag == 1001)  
 					continue;
@@ -85,14 +85,14 @@ namespace jumpball
 			_possessionHistory.Add (_position);
 			_scroller.ContentSize = new SizeF (_slidingView.Underlay.Frame.Width, (50 * _possessionHistory.Count));
 
-			_arrowImage.ImageView.AnimationImages = _position == ArrowPosition.Left ? left_to_right_arrows : right_to_left_arrows;
-			_arrowImage.ImageView.AnimationRepeatCount = 1;
-			_arrowImage.ImageView.AnimationDuration = .5;
+			_arrowButton.ImageView.AnimationImages = _position == ArrowPosition.Left ? left_to_right_arrows : right_to_left_arrows;
+			_arrowButton.ImageView.AnimationRepeatCount = 1;
+			_arrowButton.ImageView.AnimationDuration = .5;
 			UIView.BeginAnimations ("rotateAnimation");
 			UIView.SetAnimationDelegate (this);
 			UIView.SetAnimationDidStopSelector (new Selector ("rotateAnimationFinished:"));
 			UIView.CommitAnimations ();
-			_arrowImage.ImageView.StartAnimating ();
+			_arrowButton.ImageView.StartAnimating ();
 
 		}
 
@@ -100,24 +100,23 @@ namespace jumpball
 		{
 			base.ViewDidLoad ();
 
-			_arrowImage.Frame = new RectangleF (0, 0, 400, 400);
-			_arrowImage.SetImage (UIImage.FromFile("1.png"), UIControlState.Normal);
-			_arrowImage.TouchUpInside += alternatePossession;
-			_arrowImage.Center = View.Center;
-			_arrowImage.AdjustsImageWhenHighlighted = false;
-			_arrowImage.AutosizesSubviews = true;
-			_arrowImage.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
+			_arrowButton.Frame = new RectangleF (0, 0, 400, 400);
+			_arrowButton.SetImage (UIImage.FromFile("1.png"), UIControlState.Normal);
+			_arrowButton.TouchUpInside += alternatePossession;
+			_arrowButton.Center = View.Center;
+			_arrowButton.AdjustsImageWhenHighlighted = false;
+			_arrowButton.AutosizesSubviews = true;
+			_arrowButton.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
 
 			_slidingView = new SEssentialsSlidingOverlay (View.Frame, true);
 			_slidingView.Overlay.BackgroundColor = UIColor.White;
-			_slidingView.Overlay.AddSubview (_arrowImage);
+			_slidingView.Overlay.AddSubview (_arrowButton);
 
 			_slidingView.UnderlayRevealAmount = UserInterfaceIdiomIsPhone ? .66f : .33f;
 			_slidingView.Underlay.AddShadowTop ();
 			_slidingView.Toolbar.BackgroundColor = UIColor.Red;
 
 			var title = new UILabel () { 
-				Tag = 1001,
 				Text = "Jumpball",
 				TextAlignment = UITextAlignment.Center,
 				Frame = new RectangleF(0,0,View.Frame.Width, 50),
@@ -128,6 +127,28 @@ namespace jumpball
 			};
 
 			_slidingView.Overlay.AddSubview (title);
+
+			var resetButton = new UIButton () { 
+				Frame = new RectangleF (0, View.Frame.Bottom - 100, View.Frame.Width, 55),
+				AutosizesSubviews = true,
+				HorizontalAlignment = UIControlContentHorizontalAlignment.Center,
+				AutoresizingMask = UIViewAutoresizing.FlexibleMargins
+			};
+
+			resetButton.SetTitleColor (UIColor.Blue, UIControlState.Normal);
+			resetButton.SetTitle ("Reset", UIControlState.Normal);
+			resetButton.TouchUpInside += delegate {
+				foreach (var subview in _scroller.Subviews) {
+					// ignore header label but remove all other subviews
+					if (subview.Tag == 1001)  
+						continue;
+					subview.RemoveFromSuperview ();
+				}
+				_possessionHistory.Clear ();
+				_scroller.ContentSize = new SizeF (0f, 0f);
+			};
+
+			_slidingView.Overlay.AddSubview (resetButton);
 			_slidingView.Style.ButtonTintColor = UIColor.White;
 
 			_scroller = new UIScrollView () {
@@ -144,6 +165,7 @@ namespace jumpball
 				new UILabel () { 
 					Frame = new RectangleF(0,0,_slidingView.Underlay.Frame.Width, 50),
 					Text = "Possession History",
+					Tag = 1001,
 					Font = UIFont.BoldSystemFontOfSize(20),
 					TextAlignment = UITextAlignment.Center
 				}
@@ -163,12 +185,12 @@ namespace jumpball
 		{
 			if (_position == ArrowPosition.Right)
 			{
-				_arrowImage.SetImage (UIImage.FromFile("5.png"), UIControlState.Normal);
+				_arrowButton.SetImage (UIImage.FromFile("5.png"), UIControlState.Normal);
 				_position = ArrowPosition.Left;
 				return;
 			}
 
-			_arrowImage.SetImage (UIImage.FromFile("1.png"), UIControlState.Normal);
+			_arrowButton.SetImage (UIImage.FromFile("1.png"), UIControlState.Normal);
 			_position = ArrowPosition.Right;
 
 		}
