@@ -22,7 +22,7 @@ namespace jumpball
 		UIScrollView _scroller;
 		SEssentialsSlidingOverlay _slidingView;
 		ArrowPosition _position = ArrowPosition.Right;
-		UIImageView _arrowImage = new UIImageView (UIImage.FromFile ("1.png"));
+		UIButton _arrowImage = new UIButton ();
 
 		static readonly UIImage[] right_to_left_arrows = new UIImage [] {
 			UIImage.FromFile("1.png"),
@@ -85,20 +85,28 @@ namespace jumpball
 			_possessionHistory.Add (_position);
 			_scroller.ContentSize = new SizeF (_slidingView.Underlay.Frame.Width, (50 * _possessionHistory.Count));
 
-			_arrowImage.AnimationImages = _position == ArrowPosition.Left ? left_to_right_arrows : right_to_left_arrows;
-			_arrowImage.AnimationRepeatCount = 1;
-			_arrowImage.AnimationDuration = .5;
+			_arrowImage.ImageView.AnimationImages = _position == ArrowPosition.Left ? left_to_right_arrows : right_to_left_arrows;
+			_arrowImage.ImageView.AnimationRepeatCount = 1;
+			_arrowImage.ImageView.AnimationDuration = .5;
 			UIView.BeginAnimations ("rotateAnimation");
 			UIView.SetAnimationDelegate (this);
 			UIView.SetAnimationDidStopSelector (new Selector ("rotateAnimationFinished:"));
 			UIView.CommitAnimations ();
-			_arrowImage.StartAnimating ();
+			_arrowImage.ImageView.StartAnimating ();
 
 		}
 
 		public override void ViewDidLoad ()
 		{
 			base.ViewDidLoad ();
+
+			_arrowImage.Frame = new RectangleF (0, 0, 400, 400);
+			_arrowImage.SetImage (UIImage.FromFile("1.png"), UIControlState.Normal);
+			_arrowImage.TouchUpInside += alternatePossession;
+			_arrowImage.Center = View.Center;
+			_arrowImage.AdjustsImageWhenHighlighted = false;
+			_arrowImage.AutosizesSubviews = true;
+			_arrowImage.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
 
 			_slidingView = new SEssentialsSlidingOverlay (View.Frame, true);
 			_slidingView.Overlay.BackgroundColor = UIColor.White;
@@ -120,23 +128,6 @@ namespace jumpball
 			};
 
 			_slidingView.Overlay.AddSubview (title);
-
-			_arrowImage.Center = View.Center;
-			_arrowImage.AutosizesSubviews = true;
-			_arrowImage.AutoresizingMask = UIViewAutoresizing.FlexibleMargins;
-
-			var alternateButton = new UIButton () { 
-				Frame = new RectangleF (0, View.Frame.Bottom - 100, View.Frame.Width, 55),
-				AutosizesSubviews = true,
-				HorizontalAlignment = UIControlContentHorizontalAlignment.Center,
-				AutoresizingMask = UIViewAutoresizing.FlexibleMargins
-			};
-
-			alternateButton.SetTitleColor (UIColor.Blue, UIControlState.Normal);
-			alternateButton.SetTitle ("Alternate", UIControlState.Normal);
-			alternateButton.TouchUpInside += alternatePossession;
-
-			_slidingView.Overlay.AddSubview (alternateButton);
 			_slidingView.Style.ButtonTintColor = UIColor.White;
 
 			_scroller = new UIScrollView () {
@@ -172,12 +163,12 @@ namespace jumpball
 		{
 			if (_position == ArrowPosition.Right)
 			{
-				_arrowImage.Image = UIImage.FromFile("5.png");
+				_arrowImage.SetImage (UIImage.FromFile("5.png"), UIControlState.Normal);
 				_position = ArrowPosition.Left;
 				return;
 			}
 
-			_arrowImage.Image = UIImage.FromFile("1.png");
+			_arrowImage.SetImage (UIImage.FromFile("1.png"), UIControlState.Normal);
 			_position = ArrowPosition.Right;
 
 		}
