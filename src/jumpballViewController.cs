@@ -8,6 +8,7 @@ using MonoTouch.ObjCRuntime;
 
 using ShinobiEssentials;
 using MonoTouch.Dialog;
+using System.Threading.Tasks;
 
 namespace jumpball
 {
@@ -57,14 +58,7 @@ namespace jumpball
 			base.DidReceiveMemoryWarning ();
 			
 			// Release any cached data, images, etc that aren't in use.
-			foreach (var subview in _scroller.Subviews) {
-				// ignore header label but remove all other subviews
-				if (subview.Tag == 1001)  
-					continue;
-				subview.RemoveFromSuperview ();
-			}
-			_possessionHistory.Clear ();
-			_scroller.ContentSize = new SizeF (0f, 0f);
+			ResetHistory ();
 		}
 
 		void alternatePossession (object sender, EventArgs args)
@@ -94,6 +88,18 @@ namespace jumpball
 			UIView.CommitAnimations ();
 			_arrowButton.ImageView.StartAnimating ();
 
+		}
+
+		void ResetHistory ()
+		{
+			foreach (var subview in _scroller.Subviews) {
+				// ignore header label but remove all other subviews
+				if (subview.Tag == 1001)
+					continue;
+				subview.RemoveFromSuperview ();
+			}
+			_possessionHistory.Clear ();
+			_scroller.ContentSize = new SizeF (0f, 0f);
 		}
 
 		public override void ViewDidLoad ()
@@ -129,7 +135,7 @@ namespace jumpball
 			_slidingView.Overlay.AddSubview (title);
 
 			var resetButton = new UIButton () { 
-				Frame = new RectangleF (0, View.Frame.Bottom - 100, View.Frame.Width, 55),
+				Frame = new RectangleF (0, View.Frame.Bottom - 150, View.Frame.Width, 55),
 				AutosizesSubviews = true,
 				HorizontalAlignment = UIControlContentHorizontalAlignment.Center,
 				AutoresizingMask = UIViewAutoresizing.FlexibleMargins
@@ -137,16 +143,10 @@ namespace jumpball
 
 			resetButton.SetTitleColor (UIColor.Blue, UIControlState.Normal);
 			resetButton.SetTitle ("Reset", UIControlState.Normal);
-			resetButton.TouchUpInside += delegate {
-				foreach (var subview in _scroller.Subviews) {
-					// ignore header label but remove all other subviews
-					if (subview.Tag == 1001)  
-						continue;
-					subview.RemoveFromSuperview ();
-				}
-				_possessionHistory.Clear ();
-				_scroller.ContentSize = new SizeF (0f, 0f);
-			};
+			resetButton.TouchUpInside += async delegate {
+				await YesNoPrompt("Clear History", "Are you sure you want to continue?");
+			}; 
+
 
 			_slidingView.Overlay.AddSubview (resetButton);
 			_slidingView.Style.ButtonTintColor = UIColor.White;
@@ -179,6 +179,24 @@ namespace jumpball
 		{
 			return true;
 		}
+
+		async Task YesNoPrompt(string title, string message) {
+			var result = await ShowModalAlertViewAsync (title, message, "Yes", "No");
+			if (result)
+				ResetHistory ();
+		}
+
+		Task<bool> ShowModalAlertViewAsync (string title, string message, params string[] buttons)
+		{
+			var alertView = new UIAlertView (title, message,  null, null, buttons);
+			alertView.Show ();
+			var tsc = new TaskCompletionSource<bool> ();
+
+			alertView.Clicked += (sender, buttonArgs) => {
+				tsc.TrySetResult(buttonArgs.ButtonIndex == 0);
+			};    
+			return tsc.Task;
+		}		
 
 		[Export("rotateAnimationFinished:")]
 		void RotateStopped ()
