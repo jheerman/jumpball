@@ -130,6 +130,12 @@
     <BundleResource Include="Resources\Icon-Small-50.png" />
     <BundleResource Include="Resources\Icon-Small-40.png" />
     <BundleResource Include="Resources\Icon-Small.png" />
+    <BundleResource Include="Resources\Default-Landscape%402x.png" />
+    <BundleResource Include="Resources\Default-Portrait%402x.png" />
+    <BundleResource Include="Resources\Default-Landscape.png" />
+    <BundleResource Include="Resources\Default-Portrait.png" />
+    <BundleResource Include="Resources\Default%402x.png" />
+    <BundleResource Include="Resources\Default.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -148,4 +154,8 @@
     <InterfaceDefinition Include="jumpballViewController_iPad.xib" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ITunesArtwork Include="iTunesArtwork%402x" />
+    <ITunesArtwork Include="iTunesArtwork" />
+  </ItemGroup>
 </Project>
